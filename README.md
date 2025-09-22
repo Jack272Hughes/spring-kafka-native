@@ -1,15 +1,18 @@
 # Testing Spring Boot + GraalVM
 
-## JDK
+## Pre-Requisites
 
-This project uses GraalVM JDK 21.0.2 community edition.
+- GraalVM JDK 21.0.2 community edition
+- Docker
 
 ## Starting application
 
-There is a `./start-all.sh` script to start all the services and run the application.
+Run these commands to set up the kafka cluster and compile the native image:
 
 ```bash
-./start-all.sh
+docker compose up -d
+./gradlew nativeCompile
+./build/native/nativeCompile/native-testing
 ```
 
 Once everything is started you can send a message to the `test-topic` topic using the Kafka console producer:
@@ -17,4 +20,5 @@ Once everything is started you can send a message to the `test-topic` topic usin
 ```bash
 docker exec -it native-testing-kafka-1 bash
 /bin/kafka-console-producer --topic test-topic --bootstrap-server 127.0.0.1:9092 --compression-codec zstd
+# Type something and press Enter
 ```
