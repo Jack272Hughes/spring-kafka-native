@@ -1,0 +1,70 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.4.10'
+	id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.graalvm.buildtools.native' version '0.10.2'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+description = 'Demo project for Spring Boot'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.kafka:spring-kafka'
+    implementation 'io.projectreactor.kafka:reactor-kafka'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.kafka:spring-kafka-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+graalvmNative {
+    binaries {
+        all {
+            resources.autodetect()
+        }
+        main {
+            imageName = "native-testing"
+            mainClass = "com.example.native_testing.NativeTestingApplication"
+
+            buildArgs.add('-H:Log=registerResource:3')
+            buildArgs.add('-H:+JNIEnhancedErrorCodes')
+            buildArgs.add('-H:+JNIVerboseLookupErrors')
+            buildArgs.add('-H:+PrintJNIMethods')
+            buildArgs.add('-H:+WarnAboutMissingReflectionOrJNIMetadataElements')
+
+            buildArgs.add("-J-XX:MaxRAMPercentage=80")
+            buildArgs.add('-H:ResourceConfigurationFiles=../../../metadata/include-resources.json')
+
+            if ('linux' == org.gradle.internal.os.OperatingSystem.current().familyName) {
+                if (System.getProperty("os.arch") == 'amd64') {
+                    // Use G1 garbage collector
+                    buildArgs.add('--gc=serial')
+                    // Build static executables which don't require external libraries.
+                    buildArgs.add('--static')
+                    buildArgs.add('--libc=musl')
+                } else {
+                    // For linux/arm64 we can try instead "mostly static" images instead (not fully tested yet).
+                    // This will require to install `gcompat` on alpine images
+                    // See https://www.graalvm.org/latest/reference-manual/native-image/guides/build-static-executables/
+                    buildArgs.add('-H:+StaticExecutableWithDynamicLibC')
+                }
+            }
+        }
+    }
+}
