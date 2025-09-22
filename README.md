@@ -18,7 +18,7 @@ docker compose up -d
 Once everything is started you can send a message to the `test-topic` topic using the Kafka console producer:
 
 ```bash
-docker exec -it spring-kafka-native-kafka-1
+docker exec -it spring-kafka-native-kafka-1 bash
 /bin/kafka-console-producer --topic test-topic --bootstrap-server 127.0.0.1:9092 --compression-codec zstd
 # Type something and press Enter
 ```
